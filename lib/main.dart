@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iotclass/home_page.dart';
 
 import 'package:iotclass/login_screen.dart';
 import 'package:iotclass/mqtt.dart';
@@ -27,9 +28,20 @@ class MyApp extends StatelessWidget {
         title: 'Flutter Demo',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme:ColorScheme.fromSwatch(primarySwatch:Colors.deepOrange),
+          colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.deepOrange),
+          appBarTheme: const AppBarTheme(
+            toolbarHeight: 80.0,
+            backgroundColor: MyApp.appPrimaryColor,
+            centerTitle: true,
+            titleTextStyle: TextStyle(
+              fontSize: 25.0,
+              // color: MyApp.appSecondaryColor,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 8.0,
+            ),
+          ).copyWith(iconTheme: const IconThemeData(size: 30.0,color: appSecondaryColor)),
         ),
-        home: const LoginScreen(),
+        home: const HomePage(),
       ),
     );
   }

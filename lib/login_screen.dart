@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:iotclass/competitor.dart';
 import 'package:iotclass/main.dart';
@@ -26,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
   var competitor = Competitor();
   var _isLoading = false;
 
-  // final _emailController = TextEditingController();
   final _mqttHostNameController = TextEditingController();
   final _loginUserNameController = TextEditingController();
   final _loginUserPasswordController = TextEditingController();
@@ -34,6 +36,35 @@ class _LoginScreenState extends State<LoginScreen> {
   final _mqttFocusNode = FocusNode();
   final _loginUserNameFocusNode = FocusNode();
   final _loginUserPasswordFocusNode = FocusNode();
+
+  bool goodConnection = false;
+
+  ConnectivityResult _connectionStatus = ConnectivityResult.none;
+
+  StreamSubscription<ConnectivityResult>? subscription;
+
+  static Future<dynamic> showCustomDialog(
+      BuildContext context, String message) async {
+    return await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+              content: Text(message,
+                  style: const TextStyle(
+                    color: MyApp.appSecondaryColor2,
+                    // letterSpacing: 1.5,
+                    fontSize: 18.0,
+                  )),
+              actions: [
+                Center(
+                  child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Okay')),
+                )
+              ],
+            ));
+  }
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
@@ -49,7 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
           .initializeMqttClient(competitor);
     } catch (error) {
       const errorMessage = 'Failed, check the internet connection later';
-      return Custom.showCustomDialog(context, errorMessage);
+
+      return showCustomDialog(context, errorMessage);
     } finally {
       setState(() {
         _isLoading = false;
@@ -59,17 +91,28 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  var init = true;
+
   @override
-  void didChangeDependencies() {
+  Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
+    if (init) {
+      subscription = Connectivity()
+          .onConnectivityChanged
+          .listen((ConnectivityResult result) {
+        setState(() {
+          _connectionStatus = result;
+        });
+      });
+      // print(_connectionStatus);
+      init = false;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final deviceHeight =
         MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
-    // final fingerprintUseAuthorized =
-    //     Provider.of<FirebaseUserData>(context).switchValue;
 
     return SafeArea(
       child: Scaffold(
@@ -78,165 +121,166 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              SizedBox(
-                height: deviceHeight,
-                child: Stack(
-                  children: [
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            SizedBox(
-                              height: deviceHeight * 0.45,
-                              child: ClipPath(
-                                clipper: CurveClipper(),
-                                child: const Image(
-                                  image: AssetImage(MyApp.appBackgroundImgUrl),
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+              if (!(_connectionStatus == ConnectivityResult.none))
+                SizedBox(
+                  height: deviceHeight,
+                  child: Stack(
+                    children: [
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: <Widget>[
+                              SizedBox(
+                                height: deviceHeight * 0.4,
+                                child: ClipPath(
+                                  clipper: CurveClipper(),
+                                  child: const Image(
+                                    image:
+                                        AssetImage(MyApp.appBackgroundImgUrl),
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const Divider(),
-                            InputField(
-                              key: const ValueKey('mqttHost'),
-                              controller: _mqttHostNameController,
-                              hintText: 'Cluster URL',
-                              icon: Icons.link,
-                              obscureText: false,
-                              focusNode: _mqttFocusNode,
-                              autoCorrect: false,
-                              enableSuggestions: false,
-                              textCapitalization: TextCapitalization.none,
-                              onFieldSubmitted: (_) => FocusScope.of(context)
-                                  .requestFocus(_loginUserNameFocusNode),
-                              textInputAction: TextInputAction.next,
-                              validator: (value) {
-                                if (value == null ||
-                                    value.isEmpty ||
-                                    !value.contains('.s1.eu.hivemq.cloud')) {
-                                  return 'Please enter a valid Cluster URL';
-                                }
-                                const txtLimit = 51;
-                                if (value.length != txtLimit) {
-                                  print(value.length);
-                                  if (value.length > txtLimit) {
-                                    return '${value.length - txtLimit} less characters';
+                              const Divider(),
+                              InputField(
+                                key: const ValueKey('mqttHost'),
+                                controller: _mqttHostNameController,
+                                hintText: 'Cluster URL',
+                                icon: Icons.link,
+                                obscureText: false,
+                                focusNode: _mqttFocusNode,
+                                autoCorrect: false,
+                                enableSuggestions: false,
+                                textCapitalization: TextCapitalization.none,
+                                onFieldSubmitted: (_) => FocusScope.of(context)
+                                    .requestFocus(_loginUserNameFocusNode),
+                                textInputAction: TextInputAction.next,
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.isEmpty ||
+                                      !value.contains('.s1.eu.hivemq.cloud')) {
+                                    return 'Please enter a valid Cluster URL';
                                   }
-                                  return '${txtLimit - value.length} more characters';
-                                }
-                                return null;
-                              },
-                              onSaved: (value) {
-                                competitor.clusterUrl =
-                                    _mqttHostNameController.text;
-                              },
-                            ),
-                            InputField(
-                              key: const ValueKey('username'),
-                              controller: _loginUserNameController,
-                              hintText: 'Registered Name',
-                              icon: Icons.person,
-                              obscureText: false,
-                              focusNode: _loginUserNameFocusNode,
-                              autoCorrect: false,
-                              enableSuggestions: false,
-                              textCapitalization: TextCapitalization.none,
-                              onFieldSubmitted: (_) => FocusScope.of(context)
-                                  .requestFocus(_loginUserPasswordFocusNode),
-                              textInputAction: TextInputAction.next,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your name';
-                                }
-                                var allMembers = <String>[];
-                                for (var element in dataBase) {
-                                  var nom = element.keys.first.trim();
-                                  allMembers.add(nom);
-                                }
-                                if (!allMembers
-                                    .contains(_loginUserNameController.text)) {
-                                  return 'User is not in the database';
-                                }
-                                return null;
-                              },
-                              onSaved: (value) {
-                                competitor.name =
-                                    _loginUserNameController.text.trim();
-                              },
-                            ),
-                            InputField(
-                              key: const ValueKey('password'),
-                              controller: _loginUserPasswordController,
-                              hintText: 'Password',
-                              icon: Icons.lock,
-                              obscureText: true,
-                              keyboard: TextInputType.number,
-                              focusNode: _loginUserPasswordFocusNode,
-                              autoCorrect: false,
-                              enableSuggestions: false,
-                              textCapitalization: TextCapitalization.none,
-                              onFieldSubmitted: (_) =>
-                                  FocusScope.of(context).requestFocus(null),
-                              textInputAction: TextInputAction.done,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter a valid password.';
-                                }
+                                  const txtLimit = 51;
+                                  if (value.length != txtLimit) {
+                                    if (value.length > txtLimit) {
+                                      return '${value.length - txtLimit} less characters';
+                                    }
+                                    return '${txtLimit - value.length} more characters';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  competitor.clusterUrl =
+                                      _mqttHostNameController.text;
+                                },
+                              ),
+                              InputField(
+                                key: const ValueKey('username'),
+                                controller: _loginUserNameController,
+                                hintText: 'Registered Name',
+                                icon: Icons.person,
+                                obscureText: false,
+                                focusNode: _loginUserNameFocusNode,
+                                autoCorrect: false,
+                                enableSuggestions: false,
+                                textCapitalization: TextCapitalization.none,
+                                onFieldSubmitted: (_) => FocusScope.of(context)
+                                    .requestFocus(_loginUserPasswordFocusNode),
+                                textInputAction: TextInputAction.next,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your name';
+                                  }
+                                  var allMembers = <String>[];
+                                  for (var element in dataBase) {
+                                    var nom = element.keys.first.trim();
+                                    allMembers.add(nom);
+                                  }
+                                  if (!allMembers.contains(
+                                      _loginUserNameController.text)) {
+                                    return 'User is not in the database';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  competitor.name =
+                                      _loginUserNameController.text.trim();
+                                },
+                              ),
+                              InputField(
+                                key: const ValueKey('password'),
+                                controller: _loginUserPasswordController,
+                                hintText: 'Password',
+                                icon: Icons.lock,
+                                obscureText: true,
+                                keyboard: TextInputType.number,
+                                focusNode: _loginUserPasswordFocusNode,
+                                autoCorrect: false,
+                                enableSuggestions: false,
+                                textCapitalization: TextCapitalization.none,
+                                onFieldSubmitted: (_) =>
+                                    FocusScope.of(context).requestFocus(null),
+                                textInputAction: TextInputAction.done,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter a valid password.';
+                                  }
 
-                                if (value.length != 10 ||
-                                    int.tryParse(_loginUserPasswordController
-                                            .text) ==
-                                        null) {
-                                  return 'Invalid phone number';
-                                }
+                                  if (value.length != 10 ||
+                                      int.tryParse(_loginUserPasswordController
+                                              .text) ==
+                                          null) {
+                                    return 'Invalid phone number';
+                                  }
 
-                                // if (!dataBase.contains({
-                                //   _loginUserNameController.text:
-                                //       _loginUserPasswordController.text
-                                // })) {
-                                //   print({
-                                //     _loginUserNameController.text:
-                                //         _loginUserPasswordController.text
-                                //   });
-                                //   return 'Invalid password';
-                                // }
-                                // todo Lock password
-                                return null;
-                              },
-                              onSaved: (value) {
-                                competitor.phoneNumber = int.parse(
-                                    _loginUserPasswordController.text);
-                              },
-                            ),
-                            Expanded(
-                                child: Align(
-                                    alignment: FractionalOffset.center,
-                                    child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                            fixedSize: Size(
-                                                MediaQuery.of(context)
-                                                        .size
-                                                        .width /
-                                                    1.5,
-                                                60),
-                                            backgroundColor:
-                                                MyApp.appPrimaryColor,
-                                            padding: const EdgeInsets.all(10),
-                                            elevation: 3,
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        20.0))),
-                                        onPressed: _submit,
-                                        child: const Text('Login')))),
-                          ]),
-                    ),
-                  ],
+                                  // todo ALWAYS TRUE
+                                  if (!dataBase.contains({
+                                    _loginUserNameController.text:
+                                        _loginUserPasswordController.text
+                                  })) {
+                                    print({
+                                      _loginUserNameController.text:
+                                          _loginUserPasswordController.text
+                                    });
+                                    return 'Invalid password';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  competitor.phoneNumber = int.parse(
+                                      _loginUserPasswordController.text);
+                                },
+                              ),
+                              Expanded(
+                                  child: Align(
+                                      alignment: FractionalOffset.center,
+                                      child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                              fixedSize: Size(
+                                                  MediaQuery.of(context)
+                                                          .size
+                                                          .width /
+                                                      1.5,
+                                                  60),
+                                              backgroundColor:
+                                                  MyApp.appPrimaryColor,
+                                              padding: const EdgeInsets.all(10),
+                                              elevation: 3,
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          20.0))),
+                                          onPressed: _submit,
+                                          child: const Text('Login')))),
+                            ]),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (_isLoading)
+              if (_isLoading || _connectionStatus == ConnectivityResult.none)
                 Container(
                   width: double.infinity,
                   height: MediaQuery.of(context).size.height -
@@ -245,19 +289,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     gradient: LinearGradient(
                       colors: [
                         MyApp.appPrimaryColor.withOpacity(0.3),
-                        MyApp.appSecondaryColor.withOpacity(0.3),
+                        MyApp.appSecondaryColor.withOpacity(0.2),
                         MyApp.appSecondaryColor2.withOpacity(0.2),
                       ],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
                     ),
                   ),
+                  child: _connectionStatus == ConnectivityResult.none
+                      ? const Center(
+                          child: Icon(
+                            Icons.signal_wifi_connected_no_internet_4_sharp,
+                            size: 100.0,
+                            color: Colors.white,
+                          ),
+                        )
+                      : null,
                 ),
               if (_isLoading)
                 LoadingFadingLine.circle(
-                  borderColor:MyApp.appSecondaryColor,
+                  borderColor: MyApp.appSecondaryColor,
                   borderSize: 2.0,
                   size: 40.0,
                   backgroundColor: MyApp.appPrimaryColor,
-                  duration: Duration(milliseconds: 500),
+                  duration: const Duration(milliseconds: 500),
                 )
             ],
           ),
@@ -270,6 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     super.dispose();
 
+    subscription?.cancel();
     _mqttFocusNode.dispose();
     _loginUserNameFocusNode.dispose();
     _loginUserPasswordFocusNode.dispose();

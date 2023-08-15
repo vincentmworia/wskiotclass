@@ -13,6 +13,7 @@ dependencies:
   intl: ^0.18.1
   provider: ^6.0.5
   loading_animations: ^2.2.0
+  connectivity_plus: ^4.0.2
 
 dev_dependencies:
   flutter_test:

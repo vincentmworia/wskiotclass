@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:iotclass/competitor.dart';
 import 'package:mqtt_client/mqtt_client.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 import 'package:mqtt_client/mqtt_server_client.dart';
 
 // import 'package:intl/intl.dart';
@@ -28,6 +30,13 @@ class MqttProvider with ChangeNotifier {
 
   ConnectionStatus get connectionStatus => _connStatus;
 
+  var bool1 = false;
+
+  var bool2 = false;
+
+  var int1 = 0;
+  var int2 = 0;
+
   final platform = Platform.isAndroid
       ? "Android"
       : Platform.isWindows
@@ -44,8 +53,7 @@ class MqttProvider with ChangeNotifier {
   String? _loginTime;
 
   Future<ConnectionStatus> initializeMqttClient(Competitor competitor) async {
-    _deviceId = '${competitor.name}/${competitor.phoneNumber}'; // todo;
-    // '&${LoginUserData.getLoggedUser!.email}&${LoginUserData.getLoggedUser!.firstname}&${LoginUserData.getLoggedUser!.lastname}';
+    _deviceId = '${competitor.name}/${competitor.phoneNumber}';
     _devicesClient = 'dekut/wsk/training/devices/$platform/$_deviceId';
 
     _loginTime = DateTime.now().toIso8601String();
@@ -85,18 +93,29 @@ class MqttProvider with ChangeNotifier {
       _mqttClient.updates?.listen((List<MqttReceivedMessage<MqttMessage>> c) {
         final MqttPublishMessage recMess = c[0].payload as MqttPublishMessage;
         final topic = c[0].topic;
-        var message =
-            MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+        var message = json.decode(MqttPublishPayload.bytesToStringAsString(
+            recMess.payload.message)) as String;
 
-        print(json.decode(message));
-        // TODO Split all the notify listeners to different classes
-        if (topic == "dekut/wsk/training/data/var1") {
-          // _heatingUnitData =
-          //     HeatingUnit.fromMap(json.decode(message) as Map<String, dynamic>);
-          // notifyListeners();
-          // deviceMqttProv.testProv();
+        if (topic == "dekut/wsk/training/data/bool1") {
+          bool1 = message == 'true' ? true : false;
+          notifyListeners();
         }
-
+        if (topic == "dekut/wsk/training/data/bool2") {
+          bool2 = message == 'true' ? true : false;
+          notifyListeners();
+        }
+        if (topic == "dekut/wsk/training/data/int1") {
+          if (int.tryParse(message) != null) {
+            int1 = int.parse(message);
+          }
+          notifyListeners();
+        }
+        if (topic == "dekut/wsk/training/data/int2") {
+          if (int.tryParse(message) != null) {
+            int2 = int.parse(message);
+          }
+          notifyListeners();
+        }
       });
     }
 
