@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:iotclass/home_page.dart';
+import 'package:iotclass/screens/home_screen.dart';
 
-import 'package:iotclass/login_screen.dart';
-import 'package:iotclass/mqtt.dart';
+import 'package:iotclass/screens/login_screen.dart';
+import 'package:iotclass/widgets/mqtt.dart';
 import 'package:provider/provider.dart';
 
 void main() {
+  // todo Lock the orientation to vertical
   runApp(const MyApp());
 }
 
@@ -41,7 +42,7 @@ class MyApp extends StatelessWidget {
             ),
           ).copyWith(iconTheme: const IconThemeData(size: 30.0,color: appSecondaryColor)),
         ),
-        home: const HomePage(),
+        home: const HomeScreen(),
       ),
     );
   }

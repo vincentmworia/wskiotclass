@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:iotclass/competitor.dart';
+import 'package:iotclass/models/competitor.dart';
 import 'package:iotclass/main.dart';
+import 'package:iotclass/widgets/curve_clipper.dart';
 import 'package:loading_animations/loading_animations.dart';
 import 'package:provider/provider.dart';
 
-import './curve_clipper.dart';
-import './custom_widgets.dart';
-import 'competitor_database.dart';
-import 'home_page.dart';
-import 'mqtt.dart';
+import '../widgets/custom_widgets.dart';
+import '../database/competitor_database.dart';
+import 'home_screen.dart';
+import '../widgets/mqtt.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = false;
       });
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => const HomePage()));
+          context, MaterialPageRoute(builder: (_) => const HomeScreen()));
     }
   }
 

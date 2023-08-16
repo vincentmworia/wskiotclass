@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:iotclass/competitor.dart';
+import 'package:iotclass/models/competitor.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'package:mqtt_client/mqtt_server_client.dart';
 
 // import 'package:intl/intl.dart';
-import '../private_data.dart';
+import '../database/private_data.dart';
 
 enum ConnectionStatus {
   disconnected,
@@ -30,12 +30,12 @@ class MqttProvider with ChangeNotifier {
 
   ConnectionStatus get connectionStatus => _connStatus;
 
-  var bool1 = false;
+  var power = false;
 
-  var bool2 = false;
+  var sensorState = false;
 
-  var int1 = 0;
-  var int2 = 0;
+  var setpoint = 0;
+  var waterLevel = 0;
 
   final platform = Platform.isAndroid
       ? "Android"
@@ -89,30 +89,31 @@ class MqttProvider with ChangeNotifier {
     }
 
     if (_connStatus == ConnectionStatus.connected) {
-      _mqttClient.subscribe("dekut/wsk/training/data/#", MqttQos.exactlyOnce);
+      _mqttClient.subscribe("dekut/wsk/training/data-from-plc/#", MqttQos.exactlyOnce);
       _mqttClient.updates?.listen((List<MqttReceivedMessage<MqttMessage>> c) {
         final MqttPublishMessage recMess = c[0].payload as MqttPublishMessage;
         final topic = c[0].topic;
         var message = json.decode(MqttPublishPayload.bytesToStringAsString(
             recMess.payload.message)) as String;
 
-        if (topic == "dekut/wsk/training/data/bool1") {
-          bool1 = message == 'true' ? true : false;
+        if (topic == "dekut/wsk/training/data-from-plc/power") {
+          power = message == 'true' ? true : false;
+          // power = message == 'true' ? true : false;
           notifyListeners();
         }
-        if (topic == "dekut/wsk/training/data/bool2") {
-          bool2 = message == 'true' ? true : false;
+        if (topic == "dekut/wsk/training/data-from-plc/sensor-state") {
+          sensorState = message == 'true' ? true : false;
           notifyListeners();
         }
-        if (topic == "dekut/wsk/training/data/int1") {
+        if (topic == "dekut/wsk/training/data-from-plc/data/set-point") {
           if (int.tryParse(message) != null) {
-            int1 = int.parse(message);
+            setpoint = int.parse(message);
           }
           notifyListeners();
         }
-        if (topic == "dekut/wsk/training/data/int2") {
+        if (topic == "dekut/wsk/training/data-from-plc/water-level") {
           if (int.tryParse(message) != null) {
-            int2 = int.parse(message);
+            waterLevel = int.parse(message);
           }
           notifyListeners();
         }
