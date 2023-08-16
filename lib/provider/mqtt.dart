@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -57,7 +56,7 @@ class MqttProvider with ChangeNotifier {
 
     _loginTime = DateTime.now().toIso8601String();
     final connMessage = MqttConnectMessage()
-      ..authenticateAs(mqttUsername, mqttPassword)
+      ..authenticateAs(competitor.name, competitor.phoneNumber.toString())
       ..withWillTopic(_devicesClient!)
       ..withWillMessage('DisconnectedHard-$_loginTime')
       ..withWillRetain()
