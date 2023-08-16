@@ -20,8 +20,9 @@ class _CustomSliderState extends State<CustomSlider> {
       builder: (_, mqttVal, __) => Slider(
         value: val,
         onChanged: (value) {
-          mqttVal.publishMsg(
-              'dekut/wsk/training/data/water-level', json.encode(value * 100));
+          // todo Making the operation asynchronous
+          Future.delayed(Duration.zero).then((value) => mqttVal.publishMsg(
+              'dekut/wsk/training/data/water-level', json.encode(value * 100)));
           setState(() {
             val = value;
           });
