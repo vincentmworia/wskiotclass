@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:iotclass/screens/home_screen.dart';
-
-import 'package:iotclass/screens/login_screen.dart';
-import 'package:iotclass/widgets/mqtt.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../screens/login_screen.dart';
+import './provider/mqtt.dart';
+
 void main() {
-  // todo Lock the orientation to vertical
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.portraitUp,
+  ]);
   runApp(const MyApp());
 }
 
@@ -26,7 +30,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => MqttProvider()),
       ],
       child: MaterialApp(
-        title: 'Flutter Demo',
+        title: 'Flutter IOT',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.deepOrange),
@@ -40,9 +44,11 @@ class MyApp extends StatelessWidget {
               fontWeight: FontWeight.bold,
               letterSpacing: 8.0,
             ),
-          ).copyWith(iconTheme: const IconThemeData(size: 30.0,color: appSecondaryColor)),
+          ).copyWith(
+              iconTheme:
+                  const IconThemeData(size: 30.0, color: appSecondaryColor)),
         ),
-        home: const HomeScreen(),
+        home: const LoginScreen(),
       ),
     );
   }

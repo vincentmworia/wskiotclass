@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../main.dart';
-import 'mqtt.dart';
+import '../provider/mqtt.dart';
 
 class WaterLevelView extends StatelessWidget {
   const WaterLevelView(
@@ -11,7 +11,7 @@ class WaterLevelView extends StatelessWidget {
   });
 
   final BoxConstraints cons;
-
+  static num waterLevel=0.0;
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, con) {
@@ -22,13 +22,14 @@ class WaterLevelView extends StatelessWidget {
             decoration: BoxDecoration(
               color: clr,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(cons.maxWidth * 0.075),
-                topRight: Radius.circular(cons.maxWidth * 0.075),
-                bottomLeft: Radius.circular(cons.maxWidth * 0.05),
-                bottomRight: Radius.circular(cons.maxWidth * 0.05),
+                topLeft: Radius.circular(cons.maxWidth * 0.05),
+                topRight: Radius.circular(cons.maxWidth * 0.05),
+                bottomLeft: Radius.circular(cons.maxWidth * 0.035),
+                bottomRight: Radius.circular(cons.maxWidth * 0.035),
               ),
             ),
           );
+
       return Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -36,18 +37,17 @@ class WaterLevelView extends StatelessWidget {
           Consumer<MqttProvider>(
 
             builder: (_, mqttVal, __) {
-              var waterLevel = 0.0;
+                waterLevel =mqttVal.waterLevel;
 
               return Stack(
                 alignment: Alignment.center,
                 children: [
-                  waterContainer(con.maxHeight * waterLevel / 100, MyApp.appPrimaryColor),
+                  waterContainer(con.maxHeight * waterLevel / 100, MyApp.appPrimaryColor.withOpacity(0.6)),
+                  if(waterLevel>5)
                   Text(
                     '$waterLevel %',
                     style: TextStyle(
-                        color: waterLevel < 10
-                            ? Colors.cyanAccent
-                            : waterLevel >= 10 && waterLevel < 60
+                        color:  waterLevel >= 10 && waterLevel < 60
                                 ? Colors.white
                                 : MyApp.appSecondaryColor,
                         fontSize: 25.0),
@@ -57,7 +57,7 @@ class WaterLevelView extends StatelessWidget {
             },
           ),
           const Text('Water Level',
-              style: TextStyle(color: MyApp.appPrimaryColor, fontSize: 22))
+              style: TextStyle(color: MyApp.appPrimaryColor, fontSize: 20))
         ],
       );
     });

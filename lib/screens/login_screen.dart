@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:iotclass/models/competitor.dart';
-import 'package:iotclass/main.dart';
-import 'package:iotclass/widgets/curve_clipper.dart';
 import 'package:loading_animations/loading_animations.dart';
 import 'package:provider/provider.dart';
 
 import '../widgets/custom_widgets.dart';
+import '../models/competitor.dart';
+import '../main.dart';
+import '../widgets/curve_clipper.dart';
 import '../database/competitor_database.dart';
-import 'home_screen.dart';
-import '../widgets/mqtt.dart';
+import './home_screen.dart';
+import '../provider/mqtt.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
@@ -111,6 +111,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _mqttHostNameController.text =
+        '53d10eeb011b442b82d0c35279be0429.s1.eu.hivemq.cloud';
+    _loginUserNameController.text = 'Vincent';
+    _loginUserPasswordController.text = '0726493355';
     final deviceHeight =
         MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
 
@@ -236,17 +240,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                     return 'Invalid phone number';
                                   }
 
-                                  // todo ALWAYS TRUE
-                                  if (!dataBase.contains({
-                                    _loginUserNameController.text:
-                                        _loginUserPasswordController.text
-                                  })) {
-                                    print({
-                                      _loginUserNameController.text:
-                                          _loginUserPasswordController.text
-                                    });
-                                    return 'Invalid password';
-                                  }
+                                  // todo Lock with password
+                                  // if (!dataBase.contains({
+                                  //   _loginUserNameController.text:
+                                  //       _loginUserPasswordController.text
+                                  // })) {
+                                  //   print({
+                                  //     _loginUserNameController.text:
+                                  //         _loginUserPasswordController.text
+                                  //   });
+                                  //   return 'Invalid password';
+                                  // }
                                   return null;
                                 },
                                 onSaved: (value) {

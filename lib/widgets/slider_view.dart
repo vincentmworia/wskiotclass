@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../main.dart';
-import 'custom_slider.dart';
+import './custom_slider.dart';
 
 class SliderView extends StatelessWidget {
   const SliderView({super.key});

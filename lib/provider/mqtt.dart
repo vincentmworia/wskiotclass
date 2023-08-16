@@ -2,15 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:iotclass/models/competitor.dart';
 import 'package:mqtt_client/mqtt_client.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-
 import 'package:mqtt_client/mqtt_server_client.dart';
 
-// import 'package:intl/intl.dart';
 import '../database/private_data.dart';
+import '../models/competitor.dart';
 
 enum ConnectionStatus {
   disconnected,
@@ -34,8 +32,9 @@ class MqttProvider with ChangeNotifier {
 
   var sensorState = false;
 
-  var setpoint = 0;
-  var waterLevel = 0;
+  num setPoint = 0;
+  num waterLevel = 0;
+  num dischargeValveValue = 0.0;
 
   final platform = Platform.isAndroid
       ? "Android"
@@ -64,7 +63,6 @@ class MqttProvider with ChangeNotifier {
       ..withWillRetain()
       ..startClean()
       ..withWillQos(MqttQos.exactlyOnce);
-    print(competitor.clusterUrl);
     _mqttClient = MqttServerClient.withPort(
         competitor.clusterUrl!,
         // competitor.clusterUrl!,
@@ -89,37 +87,37 @@ class MqttProvider with ChangeNotifier {
     }
 
     if (_connStatus == ConnectionStatus.connected) {
-      _mqttClient.subscribe("dekut/wsk/training/data-from-plc/#", MqttQos.exactlyOnce);
+      _mqttClient.subscribe(
+          "dekut/wsk/training/data-from-plc/#", MqttQos.exactlyOnce);
       _mqttClient.updates?.listen((List<MqttReceivedMessage<MqttMessage>> c) {
         final MqttPublishMessage recMess = c[0].payload as MqttPublishMessage;
         final topic = c[0].topic;
-        var message = json.decode(MqttPublishPayload.bytesToStringAsString(
-            recMess.payload.message)) as String;
+        var message = json.decode(
+            MqttPublishPayload.bytesToStringAsString(recMess.payload.message));
 
-        if (topic == "dekut/wsk/training/data-from-plc/power") {
-          power = message == 'true' ? true : false;
-          // power = message == 'true' ? true : false;
+        if (topic == powerLedTopic) {
+          power = message as bool;
           notifyListeners();
         }
-        if (topic == "dekut/wsk/training/data-from-plc/sensor-state") {
-          sensorState = message == 'true' ? true : false;
+        if (topic == sensorStateTopic) {
+          sensorState = message as bool;
           notifyListeners();
         }
-        if (topic == "dekut/wsk/training/data-from-plc/data/set-point") {
-          if (int.tryParse(message) != null) {
-            setpoint = int.parse(message);
-          }
+        if (topic == dischargeValveTopic) {
+          dischargeValveValue = message as double;
           notifyListeners();
         }
-        if (topic == "dekut/wsk/training/data-from-plc/water-level") {
-          if (int.tryParse(message) != null) {
-            waterLevel = int.parse(message);
-          }
+        if (topic == setPointTopic) {
+          setPoint = message;
+          notifyListeners();
+        }
+        if (topic == waterLevelTopic) {
+          waterLevel = message;
+
           notifyListeners();
         }
       });
     }
-
     return _connStatus;
   }
 
