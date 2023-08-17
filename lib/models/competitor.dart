@@ -1,7 +1,7 @@
 class Competitor {
     String? clusterUrl;
     String? name;
-    int? phoneNumber;
+    String? phoneNumber;
 
   Competitor({
     this.clusterUrl,

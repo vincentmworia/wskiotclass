@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../database/mqtt_topics.dart';
 import '../main.dart';
 import '../provider/mqtt.dart';
 
@@ -28,7 +29,7 @@ class _CustomSliderState extends State<CustomSlider> {
             onChanged: (value) {
               percentage = double.parse((value * 100).toStringAsFixed(1));
               Future.delayed(Duration.zero).then((value) => mqttVal.publishMsg(
-                  'dekut/wsk/training/data-from-plc/data/discharge-value',
+                  dischargeValveTopic,
                   json.encode(percentage)));
               setState(() {
                 val = value;

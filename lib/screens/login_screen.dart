@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:loading_animations/loading_animations.dart';
 import 'package:provider/provider.dart';
 
-import '../widgets/custom_widgets.dart';
-import '../models/competitor.dart';
-import '../main.dart';
-import '../widgets/curve_clipper.dart';
-import '../database/competitor_database.dart';
 import './home_screen.dart';
+import '../database/competitor_database.dart';
+import '../main.dart';
+import '../models/competitor.dart';
 import '../provider/mqtt.dart';
+import '../widgets/curve_clipper.dart';
+import '../widgets/custom_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool goodConnection = false;
 
-  ConnectivityResult _connectionStatus = ConnectivityResult.none;
+  ConnectivityResult? _connectionStatus;
 
   StreamSubscription<ConnectivityResult>? subscription;
 
@@ -77,17 +77,23 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       await Provider.of<MqttProvider>(context, listen: false)
-          .initializeMqttClient(competitor);
+          .initializeMqttClient(competitor)
+          .then((value) => Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const HomeScreen())));
     } catch (error) {
-      const errorMessage = 'Failed, check the internet connection later';
-
+      var errorMessage = error.toString().split(':')[0];
+      if (errorMessage == 'SocketException') {
+        errorMessage = 'No internet';
+      } if (errorMessage == 'mqtt-client') {
+        errorMessage = 'Invalid cluster Url';
+      }
       return showCustomDialog(context, errorMessage);
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -96,7 +102,12 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
+
     if (init) {
+      _connectionStatus = await (Connectivity().checkConnectivity());
+      setState(() {
+        _connectionStatus;
+      });
       subscription = Connectivity()
           .onConnectivityChanged
           .listen((ConnectivityResult result) {
@@ -104,17 +115,13 @@ class _LoginScreenState extends State<LoginScreen> {
           _connectionStatus = result;
         });
       });
-      // print(_connectionStatus);
       init = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    _mqttHostNameController.text =
-        '53d10eeb011b442b82d0c35279be0429.s1.eu.hivemq.cloud';
-    _loginUserNameController.text = 'Vincent';
-    _loginUserPasswordController.text = '0726493355';
+
     final deviceHeight =
         MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
 
@@ -239,23 +246,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                           null) {
                                     return 'Invalid phone number';
                                   }
-
-                                  // todo Lock with password
-                                  // if (!dataBase.contains({
-                                  //   _loginUserNameController.text:
-                                  //       _loginUserPasswordController.text
-                                  // })) {
-                                  //   print({
-                                  //     _loginUserNameController.text:
-                                  //         _loginUserPasswordController.text
-                                  //   });
-                                  //   return 'Invalid password';
-                                  // }
+                                  dataBase.where((element) =>
+                                      element.values.first ==
+                                      _loginUserPasswordController.text);
+                                  var match = false;
+                                  for (var element in dataBase) {
+                                    match = element.keys.first ==
+                                            _loginUserNameController.text &&
+                                        element.values.first ==
+                                            _loginUserPasswordController.text;
+                                    if (match) {
+                                      break;
+                                    }
+                                  }
+                                  if (!match) {
+                                    return 'Wrong password';
+                                  }
                                   return null;
                                 },
                                 onSaved: (value) {
-                                  competitor.phoneNumber = int.parse(
-                                      _loginUserPasswordController.text);
+                                  competitor.phoneNumber =
+                                      _loginUserPasswordController.text;
                                 },
                               ),
                               Expanded(
@@ -328,7 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     super.dispose();
-
+    init = true;
     subscription?.cancel();
     _mqttFocusNode.dispose();
     _loginUserNameFocusNode.dispose();

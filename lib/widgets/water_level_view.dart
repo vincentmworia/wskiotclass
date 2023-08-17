@@ -22,8 +22,8 @@ class WaterLevelView extends StatelessWidget {
             decoration: BoxDecoration(
               color: clr,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(cons.maxWidth * 0.05),
-                topRight: Radius.circular(cons.maxWidth * 0.05),
+                topLeft: Radius.circular(cons.maxWidth * 0.015),
+                topRight: Radius.circular(cons.maxWidth * 0.015),
                 bottomLeft: Radius.circular(cons.maxWidth * 0.035),
                 bottomRight: Radius.circular(cons.maxWidth * 0.035),
               ),
@@ -42,14 +42,14 @@ class WaterLevelView extends StatelessWidget {
               return Stack(
                 alignment: Alignment.center,
                 children: [
-                  waterContainer(con.maxHeight * waterLevel / 100, MyApp.appPrimaryColor.withOpacity(0.6)),
+                  waterContainer(con.maxHeight * waterLevel / 100,Colors.cyanAccent.withOpacity(0.8)),
                   if(waterLevel>5)
                   Text(
                     '$waterLevel %',
                     style: TextStyle(
                         color:  waterLevel >= 10 && waterLevel < 60
                                 ? Colors.white
-                                : MyApp.appSecondaryColor,
+                                : MyApp.appPrimaryColor,
                         fontSize: 25.0),
                   )
                 ],

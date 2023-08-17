@@ -20,7 +20,7 @@ class LedLightsView extends StatelessWidget {
                 decoration: BoxDecoration(
                   border: Border.all(color: MyApp.appPrimaryColor,width: 2),
                     color:
-                         MyApp.appPrimaryColor.withOpacity(condition ?0.9:0.3)  ,
+                         MyApp.appPrimaryColor.withOpacity(condition ?0.8:0.3)  ,
                     shape: BoxShape.circle),
               ),
                 Text(title,

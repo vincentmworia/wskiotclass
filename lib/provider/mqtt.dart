@@ -7,6 +7,7 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
 import '../database/private_data.dart';
+import '../database/mqtt_topics.dart';
 import '../models/competitor.dart';
 
 enum ConnectionStatus {
@@ -56,7 +57,8 @@ class MqttProvider with ChangeNotifier {
 
     _loginTime = DateTime.now().toIso8601String();
     final connMessage = MqttConnectMessage()
-      ..authenticateAs(competitor.name, competitor.phoneNumber.toString())
+      ..authenticateAs(competitor.name,
+          '${competitor.name}${competitor.phoneNumber.toString()}')
       ..withWillTopic(_devicesClient!)
       ..withWillMessage('DisconnectedHard-$_loginTime')
       ..withWillRetain()
@@ -77,15 +79,7 @@ class MqttProvider with ChangeNotifier {
 
     try {
       await _mqttClient.connect();
-    } catch (e) {
-      if (kDebugMode) {
-        print('\n\nException: $e');
-      }
-      _mqttClient.disconnect();
-      _connStatus = ConnectionStatus.disconnected;
-    }
 
-    if (_connStatus == ConnectionStatus.connected) {
       _mqttClient.subscribe(
           "dekut/wsk/training/data-from-plc/#", MqttQos.exactlyOnce);
       _mqttClient.updates?.listen((List<MqttReceivedMessage<MqttMessage>> c) {
@@ -116,6 +110,14 @@ class MqttProvider with ChangeNotifier {
           notifyListeners();
         }
       });
+    } catch (e) {
+      if (kDebugMode) {
+        print('\n\nException: $e');
+      }
+      _mqttClient.disconnect();
+      _connStatus = ConnectionStatus.disconnected;
+
+      rethrow;
     }
     return _connStatus;
   }
